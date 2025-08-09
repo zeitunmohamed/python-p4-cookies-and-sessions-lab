@@ -2,6 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import MetaData
 from sqlalchemy_serializer import SerializerMixin
 
+# Naming convention to avoid migration issues
 metadata = MetaData(naming_convention={
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
 })
@@ -21,6 +22,9 @@ class Article(db.Model, SerializerMixin):
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
+    # Prevent recursion in relationships
+    serialize_rules = ('-user.articles',)
+
     def __repr__(self):
         return f'Article {self.id} by {self.author}'
 
@@ -31,6 +35,9 @@ class User(db.Model, SerializerMixin):
     name = db.Column(db.String)
 
     articles = db.relationship('Article', backref='user')
+
+    # Prevent recursion
+    serialize_rules = ('-articles.user',)
 
     def __repr__(self):
         return f'User {self.name}, ID {self.id}'
